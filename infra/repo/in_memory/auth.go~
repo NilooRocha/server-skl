@@ -1,0 +1,26 @@
+package in_memory
+
+import (
+	"golang.org/x/crypto/bcrypt"
+	"server/domain"
+)
+
+type authRepo struct{}
+
+func (a *authRepo) CreateJWT(email string) (string, error) {
+	
+}
+
+func NewAuthRepo() domain.IAuth {
+	return &authRepo{}
+}
+
+func (a *authRepo) HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	return string(bytes), err
+}
+
+func (a *authRepo) VerifyPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
