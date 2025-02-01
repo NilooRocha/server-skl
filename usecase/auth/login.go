@@ -16,8 +16,9 @@ type LoginInput struct {
 }
 
 type LoginOutput struct {
-	Token string
-	User  domain.User
+	AccessToken  string
+	RefreshToken string
+	User         domain.User
 }
 
 type Login struct {
@@ -42,10 +43,19 @@ func (l *Login) Execute(i LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, ErrInvalidEmailOrPassword
 	}
 
-	token, err := l.auth.CreateJWT(user.ID)
+	accessToken, err := l.auth.CreateAccessToken(user.ID)
 	if err != nil {
 		return LoginOutput{}, ErrTokenCreationFailed
 	}
 
-	return LoginOutput{Token: token, User: user}, nil
+	refreshToken, err := l.auth.CreateRefreshToken(user.ID)
+	if err != nil {
+		return LoginOutput{}, ErrTokenCreationFailed
+	}
+
+	return LoginOutput{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         user,
+	}, nil
 }

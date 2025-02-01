@@ -38,12 +38,22 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "Authorization",
-		Value:    output.Token,
+		Value:    output.AccessToken,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, //TODO: set secure to true
+		Secure:   false, // TODO: set secure to true
 		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Now().Add(1 * time.Hour),
+		Expires:  time.Now().Add(15 * time.Minute),
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "RefreshToken",
+		Value:    output.RefreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // TODO: set secure to true
+		SameSite: http.SameSiteStrictMode,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
 	})
 
 	w.WriteHeader(http.StatusOK)
@@ -60,6 +70,18 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 		Expires:  time.Unix(0, 0),
 	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "RefreshToken",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // TODO: Defina para true em produção
+		SameSite: http.SameSiteStrictMode,
+		Expires:  time.Unix(0, 0),
+	})
+
+	w.Header().Set("Cache-Control", "no-store")
 
 	w.WriteHeader(http.StatusOK)
 }

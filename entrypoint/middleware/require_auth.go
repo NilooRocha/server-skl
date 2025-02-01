@@ -6,6 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"server/domain"
+	"time"
 )
 
 type UserClaims struct {
@@ -15,7 +16,7 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-func RequireAuth(next http.Handler, userRepo domain.IUser) http.Handler {
+func RequireAuth(next http.Handler, userRepo domain.IUser, authRepo domain.IAuth) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("Authorization")
 		if err != nil {
@@ -35,7 +36,39 @@ func RequireAuth(next http.Handler, userRepo domain.IUser) http.Handler {
 		})
 
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Error parsing token: %v", err), http.StatusUnauthorized)
+			// Token expirado, tenta renovar com o refresh token
+			refreshCookie, err := r.Cookie("RefreshToken")
+			if err != nil {
+				http.Error(w, "Refresh token is missing", http.StatusUnauthorized)
+				return
+			}
+
+			refreshToken := refreshCookie.Value
+
+			userID, err := authRepo.ValidateRefreshToken(refreshToken)
+			if err != nil {
+				http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
+				return
+			}
+
+			accessToken, err := authRepo.CreateAccessToken(userID)
+			if err != nil {
+				http.Error(w, "Failed to create access token", http.StatusInternalServerError)
+				return
+			}
+
+			http.SetCookie(w, &http.Cookie{
+				Name:     "Authorization",
+				Value:    accessToken,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   false, // TODO: set secure to true
+				SameSite: http.SameSiteStrictMode,
+				Expires:  time.Now().Add(15 * time.Minute),
+			})
+
+			r.Header.Set("Authorization", accessToken)
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -52,7 +85,6 @@ func RequireAuth(next http.Handler, userRepo domain.IUser) http.Handler {
 		}
 
 		if !user.IsVerified {
-			//TODO: send verification email
 			http.Error(w, "Email is not verified", http.StatusForbidden)
 			return
 		}

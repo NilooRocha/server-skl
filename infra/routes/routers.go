@@ -37,10 +37,10 @@ func CreateRoutes() {
 
 	userHandler := handler.NewUserHandler(createUserUseCase, readUserUseCase, listUsersUseCase, firstTimeSetupUseCase)
 
-	http.Handle("/users", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ListUsers), userRepo)))
+	http.Handle("/users", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ListUsers), userRepo, authRepo)))
 	http.Handle("/user", middleware.Cors(http.HandlerFunc(userHandler.CreateUser)))
-	http.Handle("/user/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ReadUser), userRepo)))
-	http.Handle("/user/first-time-setup", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.FirstTimeSetup), userRepo)))
+	http.Handle("/user/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ReadUser), userRepo, authRepo)))
+	http.Handle("/user/first-time-setup", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.FirstTimeSetup), userRepo, authRepo)))
 
 	//---------------AUTH----------------------
 
