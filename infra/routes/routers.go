@@ -45,8 +45,12 @@ func CreateRoutes() {
 	//---------------AUTH----------------------
 
 	loginUseCase := usecaseauth.NewLogin(userRepo, authRepo)
-	authHandler := handler.NewAuthHandler(loginUseCase)
+	resetPasswordUseCase := usecaseauth.NewResetPassword(userRepo, authRepo)
+	requestResetPasswordUseCase := usecaseauth.NewRequestResetPassword(userRepo, authRepo)
+	authHandler := handler.NewAuthHandler(loginUseCase, resetPasswordUseCase, requestResetPasswordUseCase)
 
 	http.Handle("/login", middleware.Cors(http.HandlerFunc(authHandler.Login)))
-	http.Handle("/logout", middleware.Cors(http.HandlerFunc(authHandler.Logout)))
+	http.Handle("/logout", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(authHandler.Logout), userRepo, authRepo)))
+	http.Handle("/reset-password", middleware.Cors(http.HandlerFunc(authHandler.ResetPassword)))
+	http.Handle("/request-reset-password", middleware.Cors(http.HandlerFunc(authHandler.RequestResetPassword)))
 }

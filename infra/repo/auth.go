@@ -67,3 +67,31 @@ func (a *authRepo) ValidateRefreshToken(tokenString string) (string, error) {
 
 	return "", fmt.Errorf("invalid token")
 }
+
+func (a *authRepo) CreatePasswordResetToken(userID string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": userID,
+		"exp": time.Now().Add(time.Minute * 30).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte("5asfg67sdftgs57df4g5764sdfg473sd4f62g6sdf3sd2g46sdf352sdf4"))
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+
+func (a *authRepo) ValidatePasswordResetToken(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte("5asfg67sdftgs57df4g5764sdfg473sd4f62g6sdf3sd2g46sdf352sdf4"), nil
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims["sub"].(string), nil
+	}
+	return "", fmt.Errorf("invalid reset token")
+}

@@ -33,13 +33,11 @@ func NewUserHandler(
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	input := usecase.CreateUserInput{}
 
-	// Decodifica o corpo da requisição
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Verifica campos obrigatórios
 	if input.FullName == "" || input.Email == "" || input.Password == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return

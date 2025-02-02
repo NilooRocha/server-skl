@@ -8,12 +8,16 @@ import (
 )
 
 type AuthHandler struct {
-	LoginUseCase *usecase.Login
+	LoginUseCase                *usecase.Login
+	ResetPasswordUseCase        *usecase.ResetPassword
+	RequestResetPasswordUseCase *usecase.RequestResetPassword
 }
 
-func NewAuthHandler(login *usecase.Login) *AuthHandler {
+func NewAuthHandler(login *usecase.Login, resetPassword *usecase.ResetPassword, requestResetPassword *usecase.RequestResetPassword) *AuthHandler {
 	return &AuthHandler{
-		LoginUseCase: login,
+		LoginUseCase:                login,
+		ResetPasswordUseCase:        resetPassword,
+		RequestResetPasswordUseCase: requestResetPassword,
 	}
 }
 
@@ -84,4 +88,48 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var input usecase.ResetPasswordInput
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if input.ResetToken == "" || input.NewPassword == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.ResetPasswordUseCase.Execute(input); err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) RequestResetPassword(w http.ResponseWriter, r *http.Request) {
+
+	var input usecase.RequestResetPasswordInput
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if input.Email == "" {
+		http.Error(w, "Email is required", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.RequestResetPasswordUseCase.Execute(input); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Reset link sent"))
 }

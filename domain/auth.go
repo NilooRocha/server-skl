@@ -6,4 +6,6 @@ type IAuth interface {
 	CreateAccessToken(userID string) (string, error)
 	CreateRefreshToken(userID string) (string, error)
 	ValidateRefreshToken(tokenString string) (string, error)
+	CreatePasswordResetToken(userID string) (string, error)
+	ValidatePasswordResetToken(tokenString string) (string, error)
 }
