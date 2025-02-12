@@ -14,6 +14,7 @@ type UserHandler struct {
 	ReadUserUseCase       *usecase.ReadUser
 	ListUserUseCase       *usecase.ListUsers
 	FirstTimeSetupUseCase *usecase.FirstTimeSetup
+	UpdateLocationUseCase *usecase.UpdateLocation
 }
 
 func NewUserHandler(
@@ -21,12 +22,14 @@ func NewUserHandler(
 	read *usecase.ReadUser,
 	list *usecase.ListUsers,
 	firstTimeSetup *usecase.FirstTimeSetup,
+	updateLocation *usecase.UpdateLocation,
 ) *UserHandler {
 	return &UserHandler{
 		CreateUserUseCase:     create,
 		ReadUserUseCase:       read,
 		ListUserUseCase:       list,
 		FirstTimeSetupUseCase: firstTimeSetup,
+		UpdateLocationUseCase: updateLocation,
 	}
 }
 
@@ -64,6 +67,11 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) FirstTimeSetup(w http.ResponseWriter, r *http.Request) {
+
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+	userId := parts[len(parts)-1]
+
 	input := usecase.FirstTimeSetupInput{}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -71,7 +79,9 @@ func (h *UserHandler) FirstTimeSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if input.Location == "" || input.Email == "" {
+	input.ID = userId
+
+	if input.Location == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
@@ -86,12 +96,13 @@ func (h *UserHandler) FirstTimeSetup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) ReadUser(w http.ResponseWriter, r *http.Request) {
-	urlParts := strings.Split(r.URL.Path, "/")
-	if len(urlParts) < 3 {
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+	id := parts[len(parts)-1]
+	if len(parts) < 3 {
 		http.Error(w, "ID parameter is missing", http.StatusBadRequest)
 		return
 	}
-	id := urlParts[2]
 
 	output, err := h.ReadUserUseCase.Execute(usecase.ReadUserInput{ID: id})
 	if err != nil {
@@ -101,6 +112,7 @@ func (h *UserHandler) ReadUser(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(output.User)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -116,4 +128,34 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+}
+
+func (h *UserHandler) UpdateLocation(w http.ResponseWriter, r *http.Request) {
+
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+	userId := parts[len(parts)-1]
+
+	input := usecase.UpdateLocationInput{}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	input.ID = userId
+
+	if input.Location == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	err := h.UpdateLocationUseCase.Execute(input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

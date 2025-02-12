@@ -34,13 +34,15 @@ func CreateRoutes() {
 	readUserUseCase := usecaseuser.NewReadUser(userRepo)
 	listUsersUseCase := usecaseuser.NewListUsers(userRepo)
 	firstTimeSetupUseCase := usecaseuser.NewFirstTimeSetup(userRepo)
+	updateLocationUseCase := usecaseuser.NewUpdateLocation(userRepo)
 
-	userHandler := handler.NewUserHandler(createUserUseCase, readUserUseCase, listUsersUseCase, firstTimeSetupUseCase)
+	userHandler := handler.NewUserHandler(createUserUseCase, readUserUseCase, listUsersUseCase, firstTimeSetupUseCase, updateLocationUseCase)
 
 	http.Handle("/users", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ListUsers), userRepo, authRepo)))
 	http.Handle("/user", middleware.Cors(http.HandlerFunc(userHandler.CreateUser)))
 	http.Handle("/user/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ReadUser), userRepo, authRepo)))
-	http.Handle("/user/first-time-setup", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.FirstTimeSetup), userRepo, authRepo)))
+	http.Handle("/user/first-time-setup/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.FirstTimeSetup), userRepo, authRepo)))
+	http.Handle("/user/update-location/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.UpdateLocation), userRepo, authRepo)))
 
 	//---------------AUTH----------------------
 

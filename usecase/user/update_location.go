@@ -8,25 +8,25 @@ import (
 )
 
 var (
-	ErrUserUpdateFailed = errors.New("failed to update user")
+	ErrUpdateFailed = errors.New("failed to update user")
 )
 
-type FirstTimeSetupInput struct {
+type UpdateLocationInput struct {
 	ID       string
 	Location string
 }
 
-type FirstTimeSetup struct {
+type UpdateLocation struct {
 	repo domain.IUser
 }
 
-func NewFirstTimeSetup(userRepo domain.IUser) *FirstTimeSetup {
-	return &FirstTimeSetup{
+func NewUpdateLocation(userRepo domain.IUser) *UpdateLocation {
+	return &UpdateLocation{
 		repo: userRepo,
 	}
 }
 
-func (fts *FirstTimeSetup) Execute(i FirstTimeSetupInput) error {
+func (fts *UpdateLocation) Execute(i UpdateLocationInput) error {
 	user, err := fts.repo.Read(i.ID)
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (fts *FirstTimeSetup) Execute(i FirstTimeSetupInput) error {
 
 	if err != nil {
 		log.Println("Error updating user:", err)
-		return ErrUserUpdateFailed
+		return ErrUpdateFailed
 	}
 
 	return nil
