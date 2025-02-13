@@ -34,25 +34,26 @@ func CreateRoutes() {
 	readUserUseCase := usecaseuser.NewReadUser(userRepo)
 	listUsersUseCase := usecaseuser.NewListUsers(userRepo)
 	firstTimeSetupUseCase := usecaseuser.NewFirstTimeSetup(userRepo)
-	updateLocationUseCase := usecaseuser.NewUpdateLocation(userRepo)
+	updateLocationUseCase := usecaseuser.NewUpdateUser(userRepo)
 
 	userHandler := handler.NewUserHandler(createUserUseCase, readUserUseCase, listUsersUseCase, firstTimeSetupUseCase, updateLocationUseCase)
 
 	http.Handle("/users", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ListUsers), userRepo, authRepo)))
 	http.Handle("/user", middleware.Cors(http.HandlerFunc(userHandler.CreateUser)))
-	http.Handle("/user/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ReadUser), userRepo, authRepo)))
+	http.Handle("/user/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.UserRequestHandler), userRepo, authRepo)))
 	http.Handle("/user/first-time-setup/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.FirstTimeSetup), userRepo, authRepo)))
-	http.Handle("/user/update-location/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.UpdateLocation), userRepo, authRepo)))
 
 	//---------------AUTH----------------------
 
 	loginUseCase := usecaseauth.NewLogin(userRepo, authRepo)
 	resetPasswordUseCase := usecaseauth.NewResetPassword(userRepo, authRepo)
 	requestResetPasswordUseCase := usecaseauth.NewRequestResetPassword(userRepo, authRepo)
-	authHandler := handler.NewAuthHandler(loginUseCase, resetPasswordUseCase, requestResetPasswordUseCase)
+	changePasswordUseCase := usecaseauth.NewChangePassword(userRepo)
+	authHandler := handler.NewAuthHandler(loginUseCase, resetPasswordUseCase, requestResetPasswordUseCase, changePasswordUseCase)
 
 	http.Handle("/login", middleware.Cors(http.HandlerFunc(authHandler.Login)))
 	http.Handle("/logout", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(authHandler.Logout), userRepo, authRepo)))
+	http.Handle("/change-password/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(authHandler.ChangePassword), userRepo, authRepo)))
 	http.Handle("/reset-password", middleware.Cors(http.HandlerFunc(authHandler.ResetPassword)))
 	http.Handle("/request-reset-password", middleware.Cors(http.HandlerFunc(authHandler.RequestResetPassword)))
 }

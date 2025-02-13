@@ -11,13 +11,15 @@ type AuthHandler struct {
 	LoginUseCase                *usecase.Login
 	ResetPasswordUseCase        *usecase.ResetPassword
 	RequestResetPasswordUseCase *usecase.RequestResetPassword
+	ChangePasswordUseCase       *usecase.ChangePassword
 }
 
-func NewAuthHandler(login *usecase.Login, resetPassword *usecase.ResetPassword, requestResetPassword *usecase.RequestResetPassword) *AuthHandler {
+func NewAuthHandler(login *usecase.Login, resetPassword *usecase.ResetPassword, requestResetPassword *usecase.RequestResetPassword, changePassword *usecase.ChangePassword) *AuthHandler {
 	return &AuthHandler{
 		LoginUseCase:                login,
 		ResetPasswordUseCase:        resetPassword,
 		RequestResetPasswordUseCase: requestResetPassword,
+		ChangePasswordUseCase:       changePassword,
 	}
 }
 
@@ -132,4 +134,38 @@ func (h *AuthHandler) RequestResetPassword(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Reset link sent"))
+}
+
+func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPatch {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, err := getUserIDFromUrl(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	var input usecase.ChangePasswordInput
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	if input.CurrentPassword == "" || input.NewPassword == "" {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	input.ID = userID
+
+	if err := h.ChangePasswordUseCase.Execute(input); err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
