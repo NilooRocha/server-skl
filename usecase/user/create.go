@@ -69,7 +69,6 @@ func (uc *CreateUser) Execute(i CreateUserInput) error {
 		Email:      i.Email,
 		Password:   hashedPassword,
 		IsVerified: false,
-		Balance:    0,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Time{},
 	}

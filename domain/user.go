@@ -3,16 +3,14 @@ package domain
 import "time"
 
 type User struct {
-	ID             string    `json:"id"`
-	FullName       string    `json:"fullName"`
-	Email          string    `json:"email"`
-	Password       string    `json:"-"`
-	UniversityName string    `json:"universityName"`
-	Location       string    `json:"location"`
-	IsVerified     bool      `json:"isVerified"`
-	Balance        float64   ` json:"balance"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	ID         string    `json:"id"`
+	FullName   string    `json:"fullName"`
+	Email      string    `json:"email"`
+	Password   string    `json:"-"`
+	Location   string    `json:"location"`
+	IsVerified bool      `json:"isVerified"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
 type IUser interface {

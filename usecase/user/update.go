@@ -11,9 +11,11 @@ var (
 )
 
 type UpdateInput struct {
-	ID       string
-	Location *string
-	FullName *string
+	ID         string `json:"id"`
+	FullName   string `json:"fullName"`
+	Email      string `json:"email"`
+	Location   string `json:"location"`
+	IsVerified bool   `json:"isVerified"`
 }
 
 type UpdateUser struct {
@@ -32,12 +34,12 @@ func (u *UpdateUser) Execute(i UpdateInput) error {
 		return err
 	}
 
-	if i.Location != nil {
-		user.Location = *i.Location
+	if i.Location != "" {
+		user.Location = i.Location
 	}
 
-	if i.FullName != nil {
-		user.FullName = *i.FullName
+	if i.FullName != "" {
+		user.FullName = i.FullName
 	}
 
 	user.UpdatedAt = time.Now()
