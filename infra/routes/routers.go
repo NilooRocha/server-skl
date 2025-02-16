@@ -2,58 +2,14 @@ package routes
 
 import (
 	"log"
-	"net/http"
-	"server/entrypoint/handler"
-	"server/entrypoint/middleware"
-	"server/infra/repo"
-	"server/infra/repo/in_memory"
-	usecaseauth "server/usecase/auth"
-	usecaseuser "server/usecase/user"
-	usecaseverification "server/usecase/verification"
+	"server/domain"
 )
 
-func CreateRoutes() {
-	log.Println("Initializing user routes...")
+func CreateRoutes(userRepo domain.IUser, authRepo domain.IAuth, idRepo domain.IId, verificationRepo domain.IVerification) {
+	log.Println("Initializing all routes...")
 
-	userRepo := in_memory.NewUserRepo()
-	idRepo := repo.NewIdRepo()
-	verificationRepo := repo.NewVerificationRepo()
-	authRepo := repo.NewAuthRepo()
+	CreateVerificationRoutes(userRepo, verificationRepo)
+	CreateUserRoutes(userRepo, authRepo, idRepo, verificationRepo)
+	CreateAuthRoutes(userRepo, authRepo)
 
-	//---------------VERIFICATION----------------------
-	verificationCodeUseCase := usecaseverification.NewVerifyAccount(userRepo, verificationRepo)
-	resendVerification := usecaseverification.NewResendVerification(verificationRepo, userRepo)
-	verificationHandler := handler.NewVerificationHandler(verificationCodeUseCase, resendVerification)
-
-	http.Handle("/verify-account", middleware.Cors(http.HandlerFunc(verificationHandler.VerifyAccount)))
-	http.Handle("/resend-verification-code", middleware.Cors(http.HandlerFunc(verificationHandler.ResendVerification)))
-
-	//---------------USER----------------------
-
-	createUserUseCase := usecaseuser.NewCreateUser(userRepo, authRepo, idRepo, verificationRepo)
-	readUserUseCase := usecaseuser.NewReadUser(userRepo)
-	listUsersUseCase := usecaseuser.NewListUsers(userRepo)
-	firstTimeSetupUseCase := usecaseuser.NewFirstTimeSetup(userRepo)
-	updateLocationUseCase := usecaseuser.NewUpdateUser(userRepo)
-
-	userHandler := handler.NewUserHandler(createUserUseCase, readUserUseCase, listUsersUseCase, firstTimeSetupUseCase, updateLocationUseCase)
-
-	http.Handle("/users", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.ListUsers), userRepo, authRepo)))
-	http.Handle("/user", middleware.Cors(http.HandlerFunc(userHandler.CreateUser)))
-	http.Handle("/user/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.UserRequestHandler), userRepo, authRepo)))
-	http.Handle("/user/first-time-setup/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(userHandler.FirstTimeSetup), userRepo, authRepo)))
-
-	//---------------AUTH----------------------
-
-	loginUseCase := usecaseauth.NewLogin(userRepo, authRepo)
-	resetPasswordUseCase := usecaseauth.NewResetPassword(userRepo, authRepo)
-	requestResetPasswordUseCase := usecaseauth.NewRequestResetPassword(userRepo, authRepo)
-	changePasswordUseCase := usecaseauth.NewChangePassword(userRepo)
-	authHandler := handler.NewAuthHandler(loginUseCase, resetPasswordUseCase, requestResetPasswordUseCase, changePasswordUseCase)
-
-	http.Handle("/login", middleware.Cors(http.HandlerFunc(authHandler.Login)))
-	http.Handle("/logout", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(authHandler.Logout), userRepo, authRepo)))
-	http.Handle("/change-password/", middleware.Cors(middleware.RequireAuth(http.HandlerFunc(authHandler.ChangePassword), userRepo, authRepo)))
-	http.Handle("/reset-password", middleware.Cors(http.HandlerFunc(authHandler.ResetPassword)))
-	http.Handle("/request-reset-password", middleware.Cors(http.HandlerFunc(authHandler.RequestResetPassword)))
 }

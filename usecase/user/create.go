@@ -68,6 +68,7 @@ func (uc *CreateUser) Execute(i CreateUserInput) error {
 		FullName:   i.FullName,
 		Email:      i.Email,
 		Password:   hashedPassword,
+		Role:       domain.Roles[domain.UserRole],
 		IsVerified: false,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Time{},

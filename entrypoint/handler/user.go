@@ -158,6 +158,10 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	input.ID = userID
 
 	if err := h.UpdateUserUseCase.Execute(input); err != nil {
+		if errors.Is(err, user.ErrForbidden) {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

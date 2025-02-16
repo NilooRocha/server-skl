@@ -7,6 +7,7 @@ type User struct {
 	FullName   string    `json:"fullName"`
 	Email      string    `json:"email"`
 	Password   string    `json:"-"`
+	Role       Role      `json:"role"`
 	Location   string    `json:"location"`
 	IsVerified bool      `json:"isVerified"`
 	CreatedAt  time.Time `json:"createdAt"`
@@ -20,4 +21,5 @@ type IUser interface {
 	ReadByEmail(id string) (User, error)
 	List() ([]User, error)
 	IsValidUniversityEmail(string) bool
+	CreateAdminIfNotExists(IAuth, IId) error
 }

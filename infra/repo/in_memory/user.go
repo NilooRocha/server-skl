@@ -2,8 +2,10 @@ package in_memory
 
 import (
 	"errors"
+	"log"
 	"server/domain"
 	"sync"
+	"time"
 )
 
 type userRepo struct {
@@ -80,4 +82,55 @@ func (r *userRepo) IsValidUniversityEmail(email string) bool {
 	//}
 
 	return true
+}
+
+func (r *userRepo) CreateAdminIfNotExists(auth domain.IAuth, id domain.IId) error {
+	// Bloqueio de escrita para garantir atomicidade
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	adminEmail := "admin@domain.com"
+
+	// Verifique se o admin já existe
+	userFound, err := r.ReadByEmail(adminEmail)
+	if err == nil && userFound.ID != "" {
+		// Se já existe, não faz nada
+		log.Println("Admin user already exists.")
+		return nil
+	}
+
+	// Caso não exista, crie o admin
+	adminID, err := id.Create()
+	if err != nil {
+		log.Println("Failed to generate admin ID:", err)
+		return err
+	}
+
+	hashedPassword, err := auth.HashPassword("admin123")
+	if err != nil {
+		log.Println("Failed to hash password:", err)
+		return err
+	}
+
+	// Criar o usuário admin
+	adminUser := domain.User{
+		ID:         adminID.Value,
+		FullName:   "Administrator",
+		Email:      adminEmail,
+		Location:   "Heaven",
+		Password:   hashedPassword,
+		Role:       domain.Roles[domain.AdminRole],
+		IsVerified: true,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Time{},
+	}
+
+	// Salvar o novo admin
+	if err := r.Create(adminUser); err != nil {
+		log.Println("Failed to create admin user:", err)
+		return err
+	}
+
+	log.Println("Admin user created successfully.")
+	return nil
 }

@@ -3,11 +3,13 @@ package user
 import (
 	"errors"
 	"server/domain"
+	"server/permissions"
 	"time"
 )
 
 var (
 	ErrUpdateFailed = errors.New("failed to update user")
+	ErrForbidden    = errors.New("permission denied")
 )
 
 type UpdateInput struct {
@@ -15,7 +17,7 @@ type UpdateInput struct {
 	FullName   string `json:"fullName"`
 	Email      string `json:"email"`
 	Location   string `json:"location"`
-	IsVerified bool   `json:"isVerified"`
+	IsVerified *bool  `json:"isVerified"`
 }
 
 type UpdateUser struct {
@@ -34,12 +36,28 @@ func (u *UpdateUser) Execute(i UpdateInput) error {
 		return err
 	}
 
+	if !permissions.Can(user.Role, "update", "user") {
+		return ErrForbidden
+	}
+
+	if user.Role.Name == domain.UserRole && (i.Email != "" || i.IsVerified != nil) {
+		return ErrForbidden
+	}
+
 	if i.Location != "" {
 		user.Location = i.Location
 	}
 
 	if i.FullName != "" {
 		user.FullName = i.FullName
+	}
+
+	if i.Email != "" {
+		user.Email = i.Email
+	}
+
+	if i.IsVerified != nil {
+		user.IsVerified = *i.IsVerified
 	}
 
 	user.UpdatedAt = time.Now()
