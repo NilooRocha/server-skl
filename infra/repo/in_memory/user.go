@@ -85,21 +85,18 @@ func (r *userRepo) IsValidUniversityEmail(email string) bool {
 }
 
 func (r *userRepo) CreateAdminIfNotExists(auth domain.IAuth, id domain.IId) error {
-	// Bloqueio de escrita para garantir atomicidade
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	adminEmail := "admin@domain.com"
 
-	// Verifique se o admin já existe
-	userFound, err := r.ReadByEmail(adminEmail)
-	if err == nil && userFound.ID != "" {
-		// Se já existe, não faz nada
-		log.Println("Admin user already exists.")
-		return nil
+	for _, user := range r.users {
+		if user.Email == adminEmail {
+			log.Println("Admin user already exists.")
+			return nil
+		}
 	}
 
-	// Caso não exista, crie o admin
 	adminID, err := id.Create()
 	if err != nil {
 		log.Println("Failed to generate admin ID:", err)
@@ -112,7 +109,6 @@ func (r *userRepo) CreateAdminIfNotExists(auth domain.IAuth, id domain.IId) erro
 		return err
 	}
 
-	// Criar o usuário admin
 	adminUser := domain.User{
 		ID:         adminID.Value,
 		FullName:   "Administrator",
@@ -125,11 +121,7 @@ func (r *userRepo) CreateAdminIfNotExists(auth domain.IAuth, id domain.IId) erro
 		UpdatedAt:  time.Time{},
 	}
 
-	// Salvar o novo admin
-	if err := r.Create(adminUser); err != nil {
-		log.Println("Failed to create admin user:", err)
-		return err
-	}
+	r.users[adminUser.ID] = adminUser
 
 	log.Println("Admin user created successfully.")
 	return nil

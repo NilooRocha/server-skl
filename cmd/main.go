@@ -21,6 +21,8 @@ func main() {
 	log.Println("Creating routes")
 	routes.CreateRoutes(userRepo, authRepo, idRepo, verificationRepo)
 
+	CreateAdminUserIfNotExists(userRepo, authRepo, idRepo)
+
 	port := "8080"
 
 	log.Printf("Server is running on port %s", port)

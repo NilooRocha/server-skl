@@ -1,14 +1,9 @@
 package verification
 
 import (
-	"errors"
 	"log"
 	"server/domain"
-)
-
-var (
-	ErrInvalidCode      = errors.New("invalid email or verification code")
-	ErrUserUpdateFailed = errors.New("failed to update user")
+	errors "server/usecase/_erros"
 )
 
 type VerifyAccountInput struct {
@@ -31,12 +26,12 @@ func NewVerifyAccount(userRepo domain.IUser, verificationRepo domain.IVerificati
 func (v *VerifyAccount) Execute(i VerifyAccountInput) error {
 	user, err := v.userRepo.ReadByEmail(i.Email)
 	if err != nil {
-		return ErrInvalidCode
+		return errors.ErrInvalidCode
 	}
 
 	valid, err := v.verificationRepo.Validate(user.ID, i.Code)
 	if err != nil || !valid {
-		return ErrInvalidCode
+		return errors.ErrInvalidCode
 	}
 
 	user.IsVerified = valid
@@ -45,7 +40,7 @@ func (v *VerifyAccount) Execute(i VerifyAccountInput) error {
 
 	if err != nil {
 		log.Println("Error updating user:", err)
-		return ErrUserUpdateFailed
+		return errors.ErrUserUpdateFailed
 	}
 
 	err = v.verificationRepo.Delete(user.ID)

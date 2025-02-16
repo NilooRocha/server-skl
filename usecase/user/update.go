@@ -1,15 +1,10 @@
 package user
 
 import (
-	"errors"
 	"server/domain"
 	"server/permissions"
+	errors "server/usecase/_erros"
 	"time"
-)
-
-var (
-	ErrUpdateFailed = errors.New("failed to update user")
-	ErrForbidden    = errors.New("permission denied")
 )
 
 type UpdateInput struct {
@@ -37,11 +32,11 @@ func (u *UpdateUser) Execute(i UpdateInput) error {
 	}
 
 	if !permissions.Can(user.Role, "update", "user") {
-		return ErrForbidden
+		return errors.ErrForbidden
 	}
 
 	if user.Role.Name == domain.UserRole && (i.Email != "" || i.IsVerified != nil) {
-		return ErrForbidden
+		return errors.ErrForbidden
 	}
 
 	if i.Location != "" {
@@ -63,7 +58,7 @@ func (u *UpdateUser) Execute(i UpdateInput) error {
 	user.UpdatedAt = time.Now()
 
 	if err := u.repo.Update(user); err != nil {
-		return ErrUpdateFailed
+		return errors.ErrUpdateFailed
 	}
 
 	return nil

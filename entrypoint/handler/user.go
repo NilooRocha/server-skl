@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	errorsMsg "server/usecase/_erros"
 	"server/usecase/user"
 	"strings"
 )
@@ -36,7 +37,7 @@ func NewUserHandler(
 func getUserIDFromUrl(r *http.Request) (string, error) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 3 {
-		return "", errors.New("ID parameter is missing")
+		return "", errorsMsg.ErrIdIsMissing
 	}
 	return parts[len(parts)-1], nil
 }
@@ -60,11 +61,11 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err := h.CreateUserUseCase.Execute(input)
 	if err != nil {
-		if errors.Is(err, user.ErrEmailAlreadyRegistered) {
+		if errors.Is(err, errorsMsg.ErrEmailAlreadyRegistered) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
-		if errors.Is(err, user.ErrEmailNotValid) {
+		if errors.Is(err, errorsMsg.ErrEmailNotValid) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -158,7 +159,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	input.ID = userID
 
 	if err := h.UpdateUserUseCase.Execute(input); err != nil {
-		if errors.Is(err, user.ErrForbidden) {
+		if errors.Is(err, errorsMsg.ErrForbidden) {
 			http.Error(w, err.Error(), http.StatusForbidden)
 			return
 		}

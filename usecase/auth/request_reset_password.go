@@ -1,14 +1,9 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"server/domain"
-)
-
-var (
-	ErrRequestUserNotFound  = errors.New("user not found")
-	ErrTokenCreationFailure = errors.New("failed to create reset token")
+	errors "server/usecase/_erros"
 )
 
 type RequestResetPassword struct {
@@ -30,12 +25,12 @@ func NewRequestResetPassword(userRepo domain.IUser, authRepo domain.IAuth) *Requ
 func (r *RequestResetPassword) Execute(input RequestResetPasswordInput) error {
 	user, err := r.userRepo.ReadByEmail(input.Email)
 	if err != nil {
-		return ErrRequestUserNotFound
+		return errors.ErrRequestUserNotFound
 	}
 
 	resetToken, err := r.authRepo.CreatePasswordResetToken(user.ID)
 	if err != nil {
-		return ErrTokenCreationFailure
+		return errors.ErrTokenCreationFailure
 	}
 
 	fmt.Printf("Password reset token for user '%s': %s\n", input.Email, resetToken)

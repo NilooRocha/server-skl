@@ -1,14 +1,10 @@
 package user
 
 import (
-	"errors"
 	"log"
 	"server/domain"
+	errors "server/usecase/_erros"
 	"time"
-)
-
-var (
-	ErrUserUpdateFailed = errors.New("failed to update user")
 )
 
 type FirstTimeSetupInput struct {
@@ -39,7 +35,7 @@ func (fts *FirstTimeSetup) Execute(i FirstTimeSetupInput) error {
 
 	if err != nil {
 		log.Println("Error updating user:", err)
-		return ErrUserUpdateFailed
+		return errors.ErrUserUpdateFailed
 	}
 
 	return nil

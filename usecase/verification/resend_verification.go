@@ -1,15 +1,10 @@
 package verification
 
 import (
-	"errors"
 	"log"
 	"server/domain"
+	"server/usecase/_erros"
 	"time"
-)
-
-var (
-	ErrUserNotFound = errors.New("user not found")
-	ErrGenerateCode = errors.New("error generating verification code")
 )
 
 type ResendVerificationInput struct {
@@ -34,7 +29,7 @@ func (rv *ResendVerification) Execute(i ResendVerificationInput) error {
 	user, err := rv.userRepo.ReadByEmail(i.Email)
 	if err != nil {
 		log.Println("Error fetching user:", err)
-		return ErrUserNotFound
+		return errors.ErrUserNotFound
 	}
 
 	verification, err := rv.verificationRepo.Read(user.ID)
@@ -47,7 +42,7 @@ func (rv *ResendVerification) Execute(i ResendVerificationInput) error {
 
 	const resendInterval = 2*time.Minute + 30*time.Second
 	if verification.LastSentAt.Add(resendInterval).After(now) {
-		return errors.New("please wait before requesting a new code")
+		return errors.ErrTimeInterval
 	}
 
 	var code string
@@ -57,7 +52,7 @@ func (rv *ResendVerification) Execute(i ResendVerificationInput) error {
 		code, err = rv.verificationRepo.GenerateCode()
 		if err != nil {
 			log.Println("Error generating new verification code:", err)
-			return ErrGenerateCode
+			return errors.ErrGenerateCode
 		}
 
 		verification.Code = code

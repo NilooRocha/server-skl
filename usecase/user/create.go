@@ -1,19 +1,10 @@
 package user
 
 import (
-	"errors"
 	"log"
 	"server/domain"
+	errors "server/usecase/_erros"
 	"time"
-)
-
-var (
-	ErrEmailAlreadyRegistered = errors.New("email already registered")
-	ErrEmailNotValid          = errors.New("email not valid")
-	ErrCreatePasswordHash     = errors.New("failed to hash password")
-	ErrCreateVerificationCode = errors.New("failed to create verification code")
-	ErrCreateId               = errors.New("failed to create id")
-	ErrUserCreationFailed     = errors.New("failed to create user")
 )
 
 type CreateUserInput struct {
@@ -45,22 +36,22 @@ func NewCreateUser(
 
 func (uc *CreateUser) Execute(i CreateUserInput) error {
 	if userFound, _ := uc.repo.ReadByEmail(i.Email); userFound.ID != "" {
-		return ErrEmailAlreadyRegistered
+		return errors.ErrEmailAlreadyRegistered
 	}
 
 	id, err := uc.id.Create()
 	if err != nil {
-		return ErrCreateId
+		return errors.ErrCreateId
 	}
 
 	hashedPassword, err := uc.auth.HashPassword(i.Password)
 	if err != nil {
 		log.Println(err)
-		return ErrCreatePasswordHash
+		return errors.ErrCreatePasswordHash
 	}
 
 	if !uc.repo.IsValidUniversityEmail(i.Email) {
-		return ErrEmailNotValid
+		return errors.ErrEmailNotValid
 	}
 
 	user := domain.User{
@@ -76,12 +67,12 @@ func (uc *CreateUser) Execute(i CreateUserInput) error {
 
 	if err = uc.repo.Create(user); err != nil {
 		log.Println(err)
-		return ErrUserCreationFailed
+		return errors.ErrUserCreationFailed
 	}
 
 	code, err := uc.verification.GenerateCode()
 	if err != nil {
-		return ErrCreateVerificationCode
+		return errors.ErrCreateVerificationCode
 	}
 
 	verification := domain.Verification{

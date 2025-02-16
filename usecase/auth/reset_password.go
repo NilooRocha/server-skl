@@ -1,14 +1,9 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"server/domain"
-)
-
-var (
-	ErrInvalidResetToken = errors.New("invalid or expired reset token")
-	ErrUserNotFound      = errors.New("user not found")
+	errors "server/usecase/_erros"
 )
 
 type ResetPasswordInput struct {
@@ -31,12 +26,12 @@ func NewResetPassword(userRepo domain.IUser, authRepo domain.IAuth) *ResetPasswo
 func (r *ResetPassword) Execute(input ResetPasswordInput) error {
 	userID, err := r.authRepo.ValidatePasswordResetToken(input.ResetToken)
 	if err != nil {
-		return ErrInvalidResetToken
+		return errors.ErrInvalidResetToken
 	}
 
 	user, err := r.userRepo.Read(userID)
 	if err != nil {
-		return ErrUserNotFound
+		return errors.ErrUserNotFound
 	}
 
 	hashedPassword, err := r.authRepo.HashPassword(input.NewPassword)
