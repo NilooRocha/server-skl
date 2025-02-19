@@ -4,7 +4,7 @@ Embark on a journey through my first Go application, where I have embraced Clean
 
 ## Project Overview
 
-This project is a hands-on exploration of building a login and profile-switching system in Go. The primary goal was to create a functional application while adhering to Clean Code and DDD best practices. I aimed for simplicity, avoiding unnecessary external dependencies to focus on core design principles.
+This project is a hands-on exploration of building a login system in Go. The primary goal was to create a functional application while adhering to Clean Code and DDD best practices. I aimed for simplicity, avoiding unnecessary external dependencies to focus on core design principles.
 
 ## Project Structure & Architecture
 
