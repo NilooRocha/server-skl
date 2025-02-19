@@ -2,16 +2,26 @@ package repo
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"server/domain"
-	"time"
 )
 
 type authRepo struct{}
 
 func NewAuthRepo() domain.IAuth {
 	return &authRepo{}
+}
+
+func getJWTSecret() []byte {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		panic("JWT_SECRET not defined")
+	}
+	return []byte(secret)
 }
 
 func (a *authRepo) HashPassword(password string) (string, error) {
@@ -27,34 +37,24 @@ func (a *authRepo) VerifyPassword(password, hash string) bool {
 func (a *authRepo) CreateAccessToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Minute * 15).Unix(), // 15 minutos
+		"exp": time.Now().Add(time.Minute * 15).Unix(),
 	})
 
-	// TODO: move secret key to env and create a new one
-	tokenString, err := token.SignedString([]byte("5asfg67sdftgs57df4g5764sdfg473sd4f62g6sdf3sd2g46sdf352sdf4"))
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	return token.SignedString(getJWTSecret())
 }
 
 func (a *authRepo) CreateRefreshToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 dias
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
 	})
 
-	// TODO: move secret key to env
-	tokenString, err := token.SignedString([]byte("5asfg67sdftgs57df4g5764sdfg473sd4f62g6sdf3sd2g46sdf352sdf4"))
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	return token.SignedString(getJWTSecret())
 }
 
 func (a *authRepo) ValidateRefreshToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("5asfg67sdftgs57df4g5764sdfg473sd4f62g6sdf3sd2g46sdf352sdf4"), nil
+		return getJWTSecret(), nil
 	})
 
 	if err != nil {
@@ -74,16 +74,12 @@ func (a *authRepo) CreatePasswordResetToken(userID string) (string, error) {
 		"exp": time.Now().Add(time.Minute * 30).Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte("5asfg67sdftgs57df4g5764sdfg473sd4f62g6sdf3sd2g46sdf352sdf4"))
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	return token.SignedString(getJWTSecret())
 }
 
 func (a *authRepo) ValidatePasswordResetToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("5asfg67sdftgs57df4g5764sdfg473sd4f62g6sdf3sd2g46sdf352sdf4"), nil
+		return getJWTSecret(), nil
 	})
 
 	if err != nil {

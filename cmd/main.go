@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/lpernett/godotenv"
 	"log"
 	"net/http"
+	"os"
 	"server/infra/repo"
 	"server/infra/repo/in_memory"
 
@@ -12,6 +14,12 @@ import (
 func main() {
 
 	log.Println("Initializing server...")
+
+	log.Println("Loading .env file...")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	userRepo := in_memory.NewUserRepo()
 	idRepo := repo.NewIdRepo()
@@ -23,7 +31,7 @@ func main() {
 
 	CreateAdminUserIfNotExists(userRepo, authRepo, idRepo)
 
-	port := "8080"
+	port := os.Getenv("PORT")
 
 	log.Printf("Server is running on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

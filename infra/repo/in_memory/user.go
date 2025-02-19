@@ -2,7 +2,9 @@ package in_memory
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"os"
 	"server/domain"
 	"sync"
 	"time"
@@ -88,7 +90,12 @@ func (r *userRepo) CreateAdminIfNotExists(auth domain.IAuth, id domain.IId) erro
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	adminEmail := "admin@domain.com"
+	adminEmail := os.Getenv("SUPER_USER_EMAIL")
+	adminPassword := os.Getenv("SUPER_USER_PASSWORD")
+
+	if adminEmail == "" || adminPassword == "" {
+		return fmt.Errorf("admin email or password not set in environment variables")
+	}
 
 	for _, user := range r.users {
 		if user.Email == adminEmail {
@@ -103,7 +110,7 @@ func (r *userRepo) CreateAdminIfNotExists(auth domain.IAuth, id domain.IId) erro
 		return err
 	}
 
-	hashedPassword, err := auth.HashPassword("admin123")
+	hashedPassword, err := auth.HashPassword(adminPassword)
 	if err != nil {
 		log.Println("Failed to hash password:", err)
 		return err
